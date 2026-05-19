@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Dominoes" />
+  <meta name="apple-mobile-web-app-title" content="Dominoes Scoring App" />
   <meta name="theme-color" content="#f5f0e8" />
-  <title>Dominoes Scorekeeper</title>
+  <title>Dominoes Scoring App</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -20,7 +20,7 @@
       --text-hint: #b0a898;
       --accent: #2d5a3d;
       --accent-light: #e8f2eb;
-      --danger: #8b2e2e;
+      --undo-color: #8b2e2e;
       --radius: 12px;
       --radius-sm: 7px;
     }
@@ -35,7 +35,7 @@
         --text-hint: #4a4440;
         --accent: #5a9e70;
         --accent-light: #1e2e22;
-        --danger: #c45a5a;
+        --undo-color: #c47a7a;
       }
     }
 
@@ -59,19 +59,35 @@
       gap: 14px;
     }
 
-    /* Header */
     .header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
+      gap: 8px;
     }
 
     .title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: normal;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       color: var(--text);
       font-style: italic;
+      margin-bottom: 3px;
+    }
+
+    .subtitle {
+      font-size: 10px;
+      font-family: system-ui, sans-serif;
+      font-style: normal;
+      color: var(--text-muted);
+      line-height: 1.4;
+      max-width: 200px;
+    }
+
+    .subtitle a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
 
     .header-controls {
@@ -117,7 +133,6 @@
 
     .new-game-btn:active { opacity: 0.6; }
 
-    /* Player grid */
     .players {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -133,8 +148,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      position: relative;
+      gap: 8px;
     }
 
     .player-card.winner {
@@ -144,7 +158,6 @@
 
     .player-name-input {
       font-size: 14px;
-      font-weight: normal;
       font-family: 'Georgia', serif;
       font-style: italic;
       color: var(--text);
@@ -170,7 +183,6 @@
       line-height: 1;
     }
 
-    /* Houses */
     .houses {
       display: flex;
       flex-wrap: wrap;
@@ -181,33 +193,53 @@
       width: 100%;
     }
 
-    .houses svg { display: block; }
+    .last-score {
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: var(--text-hint);
+      min-height: 14px;
+    }
 
-    /* Buttons */
-    .btn-row {
+    .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: 5px;
       width: 100%;
     }
 
     .score-btn {
-      font-size: 15px;
+      font-size: 13px;
       font-family: system-ui, sans-serif;
       font-weight: 400;
-      padding: 10px 0;
-      min-height: 44px;
+      padding: 8px 0;
+      min-height: 42px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
       cursor: pointer;
-      transition: background 0.1s, transform 0.08s;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .score-btn:active { background: var(--border); transform: scale(0.97); }
-    .score-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .score-btn:active { opacity: 0.6; transform: scale(0.97); }
+    .score-btn:disabled { opacity: 0.25; cursor: default; transform: none; }
+
+    .undo-btn {
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      padding: 7px 0;
+      min-height: 36px;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .undo-btn:active { opacity: 0.6; transform: scale(0.97); }
+    .undo-btn:disabled { opacity: 0.2; cursor: default; transform: none; }
 
     .winner-label {
       font-size: 12px;
@@ -216,9 +248,6 @@
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
-
-    /* Log */
-    .log-section { }
 
     .log-toggle-btn {
       display: block;
@@ -242,7 +271,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 8px 10px;
-      max-height: 180px;
+      max-height: 200px;
       overflow-y: auto;
     }
 
@@ -257,13 +286,17 @@
     }
 
     .log-entry:last-child { border-bottom: none; }
+    .log-entry.undo-entry { color: var(--undo-color); }
     .log-empty { font-size: 11px; font-family: system-ui, sans-serif; color: var(--text-hint); }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
-      <h1 class="title">Dominoes</h1>
+      <div>
+        <h1 class="title">Dominoes Scoring App</h1>
+        <p class="subtitle">Provided for free by Six Dot Domino Club in Minneapolis. Want to learn dominoes strategy? Check out our book: <a href="https://www.amazon.com/gp/product/B09MBV9DWV/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B09MBV9DWV&linkCode=as2&tag=dominoesboo02-20&linkId=03964fffa1d43eb78200f5b63680597a" target="_blank" rel="noopener">Play Dominoes Like a Champion</a></p>
+      </div>
       <div class="header-controls">
         <div class="target-wrap">
           <label for="target-select">To</label>
@@ -282,19 +315,17 @@
         <input class="player-name-input" id="name-0" value="Player 1" maxlength="12" placeholder="Player 1" />
         <div class="score-number" id="score-0">0</div>
         <div class="houses" id="houses-0"></div>
-        <div class="btn-row">
-          <button class="score-btn" id="btn5-0" onclick="addPoints(0,5)">+5</button>
-          <button class="score-btn" id="btn10-0" onclick="addPoints(0,10)">+10</button>
-        </div>
+        <div class="last-score" id="last-0"></div>
+        <div class="btn-grid" id="btns-0"></div>
+        <button class="undo-btn" id="undo-0" onclick="undoLast(0)" disabled>↩ undo</button>
       </div>
       <div class="player-card" id="card-1">
         <input class="player-name-input" id="name-1" value="Player 2" maxlength="12" placeholder="Player 2" />
         <div class="score-number" id="score-1">0</div>
         <div class="houses" id="houses-1"></div>
-        <div class="btn-row">
-          <button class="score-btn" id="btn5-1" onclick="addPoints(1,5)">+5</button>
-          <button class="score-btn" id="btn10-1" onclick="addPoints(1,10)">+10</button>
-        </div>
+        <div class="last-score" id="last-1"></div>
+        <div class="btn-grid" id="btns-1"></div>
+        <button class="undo-btn" id="undo-1" onclick="undoLast(1)" disabled>↩ undo</button>
       </div>
     </div>
 
@@ -305,76 +336,116 @@
   </div>
 
   <script>
-    const state = {
-      scores: [0, 0],
-      houses: [[freshHouse()], [freshHouse()]],
-      target: 200,
-      log: [],
-      over: false
-    };
+    var POINT_VALUES = [5, 10, 15, 20, 25, 30];
 
     function freshHouse() {
       return { foundation: 0, quadrants: [{t:'empty'},{t:'empty'},{t:'empty'},{t:'empty'}] };
     }
 
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    var state = {
+      scores: [0, 0],
+      houses: [[freshHouse()], [freshHouse()]],
+      lastScore: [null, null],
+      history: [[], []],
+      target: 200,
+      log: [],
+      over: false
+    };
+
     function currentHouse(player) {
-      const h = state.houses[player];
-      return h[h.length - 1];
+      return state.houses[player][state.houses[player].length - 1];
     }
 
     function addPoints(player, pts) {
       if (state.over) return;
-      let remaining = pts;
+
+      state.history[player].push({
+        score: state.scores[player],
+        houses: deepClone(state.houses[player]),
+        lastScore: state.lastScore[player]
+      });
+
+      var remaining = pts;
       while (remaining > 0) {
-        let house = currentHouse(player);
+        var house = currentHouse(player);
         if (house.foundation < 2) {
           house.foundation++;
           remaining -= 5;
           continue;
         }
-        const qi = house.quadrants.findIndex(q => q.t === 'empty' || q.t === 'half');
+        var qi = house.quadrants.findIndex(function(q) { return q.t === 'empty' || q.t === 'half'; });
         if (qi === -1) {
           state.houses[player].push(freshHouse());
           continue;
         }
-        const q = house.quadrants[qi];
+        var q = house.quadrants[qi];
         if (remaining >= 10 && q.t === 'empty') {
-          q.t = 'o';
-          remaining -= 10;
+          q.t = 'o'; remaining -= 10;
         } else if (remaining >= 5 && q.t === 'empty') {
-          q.t = 'half';
-          remaining -= 5;
+          q.t = 'half'; remaining -= 5;
         } else if (remaining >= 5 && q.t === 'half') {
-          q.t = 'x';
-          remaining -= 5;
-        } else {
-          break;
-        }
+          q.t = 'x'; remaining -= 5;
+        } else { break; }
       }
+
       state.scores[player] += pts;
-      const name = document.getElementById('name-' + player).value || 'Player ' + (player + 1);
-      const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-      state.log.push(ts + '  ' + name + '  +' + pts + '  \u2192 ' + state.scores[player]);
+      state.lastScore[player] = pts;
+
+      var name = document.getElementById('name-' + player).value || 'Player ' + (player + 1);
+      var ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      state.log.push({ text: ts + '  ' + name + '  +' + pts + '  \u2192 ' + state.scores[player], undo: false });
+
       updateUI();
       if (state.scores[player] >= state.target) endGame(player);
     }
 
+    function undoLast(player) {
+      if (state.history[player].length === 0) return;
+
+      var snap = state.history[player].pop();
+      var prevScore = state.scores[player];
+      state.scores[player] = snap.score;
+      state.houses[player] = snap.houses;
+      state.lastScore[player] = snap.lastScore;
+
+      if (state.over) {
+        state.over = false;
+        [0, 1].forEach(function(p) { setPlayerButtonsDisabled(p, false); });
+        [0, 1].forEach(function(p) {
+          var card = document.getElementById('card-' + p);
+          card.classList.remove('winner');
+          var lbl = card.querySelector('.winner-label');
+          if (lbl) lbl.remove();
+        });
+      }
+
+      var name = document.getElementById('name-' + player).value || 'Player ' + (player + 1);
+      var ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      var diff = prevScore - snap.score;
+      state.log.push({ text: ts + '  ' + name + '  UNDO \u2212' + diff + '  \u2192 ' + snap.score, undo: true });
+
+      updateUI();
+    }
+
     function drawHouseSVG(houseData, size) {
-      const ns = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(ns, 'svg');
+      var ns = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(ns, 'svg');
       svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
       svg.setAttribute('width', size);
       svg.setAttribute('height', size);
       svg.setAttribute('aria-hidden', 'true');
 
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const col = isDark ? '#f0ebe0' : '#1a1814';
-      const dimCol = isDark ? '#3a342a' : '#d6cfc0';
-      const sw = 1.8;
-      const dimSw = 0.8;
+      var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var col = isDark ? '#f0ebe0' : '#1a1814';
+      var dimCol = isDark ? '#3a342a' : '#d6cfc0';
+      var sw = 1.8, dimSw = 0.8;
 
       function ln(x1, y1, x2, y2, active) {
-        const l = document.createElementNS(ns, 'line');
+        var l = document.createElementNS(ns, 'line');
         l.setAttribute('x1', x1); l.setAttribute('y1', y1);
         l.setAttribute('x2', x2); l.setAttribute('y2', y2);
         l.setAttribute('stroke', active ? col : dimCol);
@@ -383,37 +454,30 @@
         svg.appendChild(l);
       }
 
-      const cx = size / 2, cy = size / 2;
-      const ext = size * 0.44;
-
-      // Foundation: horizontal first, then vertical
+      var cx = size / 2, cy = size / 2, ext = size * 0.44;
       ln(cx - ext, cy, cx + ext, cy, houseData.foundation >= 1);
       ln(cx, cy - ext, cx, cy + ext, houseData.foundation >= 2);
 
-      const off = size * 0.24;
-      const qc = [
+      var off = size * 0.24;
+      var qc = [
         [cx - off, cy - off],
         [cx + off, cy - off],
         [cx - off, cy + off],
         [cx + off, cy + off]
       ];
-      const xr = size * 0.155;
-      const cr = size * 0.13;
+      var xr = size * 0.155, cr = size * 0.13;
 
       houseData.quadrants.forEach(function(q, i) {
-        const qx = qc[i][0], qy = qc[i][1];
+        var qx = qc[i][0], qy = qc[i][1];
         if (q.t === 'x') {
           ln(qx - xr, qy - xr, qx + xr, qy + xr, true);
           ln(qx + xr, qy - xr, qx - xr, qy + xr, true);
         } else if (q.t === 'o') {
-          const circle = document.createElementNS(ns, 'circle');
-          circle.setAttribute('cx', qx);
-          circle.setAttribute('cy', qy);
-          circle.setAttribute('r', cr);
-          circle.setAttribute('fill', 'none');
-          circle.setAttribute('stroke', col);
-          circle.setAttribute('stroke-width', sw);
-          svg.appendChild(circle);
+          var c = document.createElementNS(ns, 'circle');
+          c.setAttribute('cx', qx); c.setAttribute('cy', qy);
+          c.setAttribute('r', cr); c.setAttribute('fill', 'none');
+          c.setAttribute('stroke', col); c.setAttribute('stroke-width', sw);
+          svg.appendChild(c);
         } else if (q.t === 'half') {
           ln(qx - xr, qy - xr, qx + xr, qy + xr, true);
         } else {
@@ -426,10 +490,34 @@
     }
 
     function renderHouses(player) {
-      const container = document.getElementById('houses-' + player);
+      var container = document.getElementById('houses-' + player);
       container.innerHTML = '';
-      state.houses[player].forEach(function(house) {
-        container.appendChild(drawHouseSVG(house, 56));
+      state.houses[player].forEach(function(h) {
+        container.appendChild(drawHouseSVG(h, 56));
+      });
+    }
+
+    function setPlayerButtonsDisabled(player, disabled) {
+      POINT_VALUES.forEach(function(pts) {
+        var btn = document.getElementById('btn' + pts + '-' + player);
+        if (btn) btn.disabled = disabled;
+      });
+    }
+
+    function buildButtons() {
+      [0, 1].forEach(function(p) {
+        var grid = document.getElementById('btns-' + p);
+        grid.innerHTML = '';
+        POINT_VALUES.forEach(function(pts) {
+          var btn = document.createElement('button');
+          btn.className = 'score-btn';
+          btn.id = 'btn' + pts + '-' + p;
+          btn.textContent = '+' + pts;
+          btn.onclick = (function(player, points) {
+            return function() { addPoints(player, points); };
+          })(p, pts);
+          grid.appendChild(btn);
+        });
       });
     }
 
@@ -437,66 +525,70 @@
       [0, 1].forEach(function(p) {
         document.getElementById('score-' + p).textContent = state.scores[p];
         renderHouses(p);
+        var lastEl = document.getElementById('last-' + p);
+        lastEl.textContent = state.lastScore[p] !== null ? 'Last: +' + state.lastScore[p] : '';
+        var undoBtn = document.getElementById('undo-' + p);
+        undoBtn.disabled = state.history[p].length === 0;
       });
       if (document.getElementById('log-area').classList.contains('open')) renderLog();
     }
 
     function endGame(winner) {
       state.over = true;
-      const name = document.getElementById('name-' + winner).value || 'Player ' + (winner + 1);
-      [0, 1].forEach(function(p) {
-        document.getElementById('btn5-' + p).disabled = true;
-        document.getElementById('btn10-' + p).disabled = true;
-      });
-      const card = document.getElementById('card-' + winner);
+      [0, 1].forEach(function(p) { setPlayerButtonsDisabled(p, true); });
+      var card = document.getElementById('card-' + winner);
       card.classList.add('winner');
       if (!card.querySelector('.winner-label')) {
-        const lbl = document.createElement('div');
+        var lbl = document.createElement('div');
         lbl.className = 'winner-label';
+        var name = document.getElementById('name-' + winner).value || 'Player ' + (winner + 1);
         lbl.textContent = name + ' wins';
         card.appendChild(lbl);
       }
+      document.getElementById('undo-' + winner).disabled = state.history[winner].length === 0;
     }
 
     function resetGame() {
       state.scores = [0, 0];
       state.houses = [[freshHouse()], [freshHouse()]];
+      state.lastScore = [null, null];
+      state.history = [[], []];
       state.over = false;
       state.log = [];
       state.target = parseInt(document.getElementById('target-select').value);
       [0, 1].forEach(function(p) {
-        document.getElementById('btn5-' + p).disabled = false;
-        document.getElementById('btn10-' + p).disabled = false;
-        const card = document.getElementById('card-' + p);
+        setPlayerButtonsDisabled(p, false);
+        document.getElementById('undo-' + p).disabled = true;
+        var card = document.getElementById('card-' + p);
         card.classList.remove('winner');
-        const lbl = card.querySelector('.winner-label');
+        var lbl = card.querySelector('.winner-label');
         if (lbl) lbl.remove();
       });
       updateUI();
     }
 
     function renderLog() {
-      const area = document.getElementById('log-area');
+      var area = document.getElementById('log-area');
       if (!state.log.length) {
         area.innerHTML = '<div class="log-empty">No entries yet.</div>';
         return;
       }
       area.innerHTML = state.log.slice().reverse().map(function(e) {
-        return '<div class="log-entry">' + e + '</div>';
+        return '<div class="log-entry' + (e.undo ? ' undo-entry' : '') + '">' + e.text + '</div>';
       }).join('');
     }
 
     function toggleLog() {
-      const area = document.getElementById('log-area');
-      const btn = document.querySelector('.log-toggle-btn');
+      var area = document.getElementById('log-area');
+      var btn = document.querySelector('.log-toggle-btn');
       area.classList.toggle('open');
       btn.textContent = area.classList.contains('open') ? 'hide score log' : 'show score log';
       if (area.classList.contains('open')) renderLog();
     }
 
-    // Redraw on color scheme change
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateUI);
 
+    buildButtons();
     updateUI();
   </script>
 </body>
