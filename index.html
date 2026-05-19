@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Dominoes" />
+  <meta name="theme-color" content="#f5f0e8" />
+  <title>Dominoes Scorekeeper</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0e8;
+      --surface: #fffef9;
+      --border: #d6cfc0;
+      --text: #1a1814;
+      --text-muted: #7a7368;
+      --text-hint: #b0a898;
+      --accent: #2d5a3d;
+      --accent-light: #e8f2eb;
+      --danger: #8b2e2e;
+      --radius: 12px;
+      --radius-sm: 7px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1814;
+        --surface: #242018;
+        --border: #3a342a;
+        --text: #f0ebe0;
+        --text-muted: #8a8278;
+        --text-hint: #4a4440;
+        --accent: #5a9e70;
+        --accent-light: #1e2e22;
+        --danger: #c45a5a;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px 12px 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: normal;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .target-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .target-wrap label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: system-ui, sans-serif;
+    }
+
+    select {
+      font-size: 13px;
+      font-family: system-ui, sans-serif;
+      padding: 4px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .new-game-btn {
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .new-game-btn:active { opacity: 0.6; }
+
+    /* Player grid */
+    .players {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .player-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .player-card.winner {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .player-name-input {
+      font-size: 14px;
+      font-weight: normal;
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      width: 100%;
+      outline: none;
+      padding-bottom: 2px;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .player-name-input::placeholder { color: var(--text-hint); }
+
+    .score-number {
+      font-size: 28px;
+      font-family: system-ui, sans-serif;
+      font-weight: 300;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    /* Houses */
+    .houses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+      min-height: 62px;
+      align-content: flex-start;
+      width: 100%;
+    }
+
+    .houses svg { display: block; }
+
+    /* Buttons */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .score-btn {
+      font-size: 15px;
+      font-family: system-ui, sans-serif;
+      font-weight: 400;
+      padding: 10px 0;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .score-btn:active { background: var(--border); transform: scale(0.97); }
+    .score-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+
+    .winner-label {
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* Log */
+    .log-section { }
+
+    .log-toggle-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      color: var(--text-hint);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .log-area {
+      display: none;
+      margin-top: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .log-area.open { display: block; }
+
+    .log-entry {
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: var(--text-muted);
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+    .log-empty { font-size: 11px; font-family: system-ui, sans-serif; color: var(--text-hint); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="title">Dominoes</h1>
+      <div class="header-controls">
+        <div class="target-wrap">
+          <label for="target-select">To</label>
+          <select id="target-select" onchange="state.target = parseInt(this.value)">
+            <option value="150">150</option>
+            <option value="200" selected>200</option>
+            <option value="250">250</option>
+          </select>
+        </div>
+        <button class="new-game-btn" onclick="resetGame()">New game</button>
+      </div>
+    </header>
+
+    <div class="players">
+      <div class="player-card" id="card-0">
+        <input class="player-name-input" id="name-0" value="Player 1" maxlength="12" placeholder="Player 1" />
+        <div class="score-number" id="score-0">0</div>
+        <div class="houses" id="houses-0"></div>
+        <div class="btn-row">
+          <button class="score-btn" id="btn5-0" onclick="addPoints(0,5)">+5</button>
+          <button class="score-btn" id="btn10-0" onclick="addPoints(0,10)">+10</button>
+        </div>
+      </div>
+      <div class="player-card" id="card-1">
+        <input class="player-name-input" id="name-1" value="Player 2" maxlength="12" placeholder="Player 2" />
+        <div class="score-number" id="score-1">0</div>
+        <div class="houses" id="houses-1"></div>
+        <div class="btn-row">
+          <button class="score-btn" id="btn5-1" onclick="addPoints(1,5)">+5</button>
+          <button class="score-btn" id="btn10-1" onclick="addPoints(1,10)">+10</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-section">
+      <button class="log-toggle-btn" onclick="toggleLog()">show score log</button>
+      <div class="log-area" id="log-area"></div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      scores: [0, 0],
+      houses: [[freshHouse()], [freshHouse()]],
+      target: 200,
+      log: [],
+      over: false
+    };
+
+    function freshHouse() {
+      return { foundation: 0, quadrants: [{t:'empty'},{t:'empty'},{t:'empty'},{t:'empty'}] };
+    }
+
+    function currentHouse(player) {
+      const h = state.houses[player];
+      return h[h.length - 1];
+    }
+
+    function addPoints(player, pts) {
+      if (state.over) return;
+      let remaining = pts;
+      while (remaining > 0) {
+        let house = currentHouse(player);
+        if (house.foundation < 2) {
+          house.foundation++;
+          remaining -= 5;
+          continue;
+        }
+        const qi = house.quadrants.findIndex(q => q.t === 'empty' || q.t === 'half');
+        if (qi === -1) {
+          state.houses[player].push(freshHouse());
+          continue;
+        }
+        const q = house.quadrants[qi];
+        if (remaining >= 10 && q.t === 'empty') {
+          q.t = 'o';
+          remaining -= 10;
+        } else if (remaining >= 5 && q.t === 'empty') {
+          q.t = 'half';
+          remaining -= 5;
+        } else if (remaining >= 5 && q.t === 'half') {
+          q.t = 'x';
+          remaining -= 5;
+        } else {
+          break;
+        }
+      }
+      state.scores[player] += pts;
+      const name = document.getElementById('name-' + player).value || 'Player ' + (player + 1);
+      const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      state.log.push(ts + '  ' + name + '  +' + pts + '  \u2192 ' + state.scores[player]);
+      updateUI();
+      if (state.scores[player] >= state.target) endGame(player);
+    }
+
+    function drawHouseSVG(houseData, size) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+      svg.setAttribute('width', size);
+      svg.setAttribute('height', size);
+      svg.setAttribute('aria-hidden', 'true');
+
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const col = isDark ? '#f0ebe0' : '#1a1814';
+      const dimCol = isDark ? '#3a342a' : '#d6cfc0';
+      const sw = 1.8;
+      const dimSw = 0.8;
+
+      function ln(x1, y1, x2, y2, active) {
+        const l = document.createElementNS(ns, 'line');
+        l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+        l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+        l.setAttribute('stroke', active ? col : dimCol);
+        l.setAttribute('stroke-width', active ? sw : dimSw);
+        l.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(l);
+      }
+
+      const cx = size / 2, cy = size / 2;
+      const ext = size * 0.44;
+
+      // Foundation: horizontal first, then vertical
+      ln(cx - ext, cy, cx + ext, cy, houseData.foundation >= 1);
+      ln(cx, cy - ext, cx, cy + ext, houseData.foundation >= 2);
+
+      const off = size * 0.24;
+      const qc = [
+        [cx - off, cy - off],
+        [cx + off, cy - off],
+        [cx - off, cy + off],
+        [cx + off, cy + off]
+      ];
+      const xr = size * 0.155;
+      const cr = size * 0.13;
+
+      houseData.quadrants.forEach(function(q, i) {
+        const qx = qc[i][0], qy = qc[i][1];
+        if (q.t === 'x') {
+          ln(qx - xr, qy - xr, qx + xr, qy + xr, true);
+          ln(qx + xr, qy - xr, qx - xr, qy + xr, true);
+        } else if (q.t === 'o') {
+          const circle = document.createElementNS(ns, 'circle');
+          circle.setAttribute('cx', qx);
+          circle.setAttribute('cy', qy);
+          circle.setAttribute('r', cr);
+          circle.setAttribute('fill', 'none');
+          circle.setAttribute('stroke', col);
+          circle.setAttribute('stroke-width', sw);
+          svg.appendChild(circle);
+        } else if (q.t === 'half') {
+          ln(qx - xr, qy - xr, qx + xr, qy + xr, true);
+        } else {
+          ln(qx - xr, qy - xr, qx + xr, qy + xr, false);
+          ln(qx + xr, qy - xr, qx - xr, qy + xr, false);
+        }
+      });
+
+      return svg;
+    }
+
+    function renderHouses(player) {
+      const container = document.getElementById('houses-' + player);
+      container.innerHTML = '';
+      state.houses[player].forEach(function(house) {
+        container.appendChild(drawHouseSVG(house, 56));
+      });
+    }
+
+    function updateUI() {
+      [0, 1].forEach(function(p) {
+        document.getElementById('score-' + p).textContent = state.scores[p];
+        renderHouses(p);
+      });
+      if (document.getElementById('log-area').classList.contains('open')) renderLog();
+    }
+
+    function endGame(winner) {
+      state.over = true;
+      const name = document.getElementById('name-' + winner).value || 'Player ' + (winner + 1);
+      [0, 1].forEach(function(p) {
+        document.getElementById('btn5-' + p).disabled = true;
+        document.getElementById('btn10-' + p).disabled = true;
+      });
+      const card = document.getElementById('card-' + winner);
+      card.classList.add('winner');
+      if (!card.querySelector('.winner-label')) {
+        const lbl = document.createElement('div');
+        lbl.className = 'winner-label';
+        lbl.textContent = name + ' wins';
+        card.appendChild(lbl);
+      }
+    }
+
+    function resetGame() {
+      state.scores = [0, 0];
+      state.houses = [[freshHouse()], [freshHouse()]];
+      state.over = false;
+      state.log = [];
+      state.target = parseInt(document.getElementById('target-select').value);
+      [0, 1].forEach(function(p) {
+        document.getElementById('btn5-' + p).disabled = false;
+        document.getElementById('btn10-' + p).disabled = false;
+        const card = document.getElementById('card-' + p);
+        card.classList.remove('winner');
+        const lbl = card.querySelector('.winner-label');
+        if (lbl) lbl.remove();
+      });
+      updateUI();
+    }
+
+    function renderLog() {
+      const area = document.getElementById('log-area');
+      if (!state.log.length) {
+        area.innerHTML = '<div class="log-empty">No entries yet.</div>';
+        return;
+      }
+      area.innerHTML = state.log.slice().reverse().map(function(e) {
+        return '<div class="log-entry">' + e + '</div>';
+      }).join('');
+    }
+
+    function toggleLog() {
+      const area = document.getElementById('log-area');
+      const btn = document.querySelector('.log-toggle-btn');
+      area.classList.toggle('open');
+      btn.textContent = area.classList.contains('open') ? 'hide score log' : 'show score log';
+      if (area.classList.contains('open')) renderLog();
+    }
+
+    // Redraw on color scheme change
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateUI);
+
+    updateUI();
+  </script>
+</body>
+</html>
