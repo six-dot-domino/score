@@ -63,7 +63,6 @@
       gap: 14px;
     }
 
-    /* Header */
     .header {
       display: flex;
       align-items: flex-start;
@@ -85,7 +84,6 @@
     .subtitle {
       font-size: 10px;
       font-family: system-ui, sans-serif;
-      font-style: normal;
       color: var(--text-muted);
       line-height: 1.4;
     }
@@ -118,7 +116,6 @@
 
     .header-btn:active { opacity: 0.6; }
 
-    /* Players */
     .players {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -141,7 +138,6 @@
       background: var(--accent-light);
     }
 
-    /* Editable name */
     .name-wrap {
       width: 100%;
       position: relative;
@@ -180,7 +176,6 @@
       pointer-events: none;
     }
 
-    /* Score */
     .score-number {
       font-size: 28px;
       font-family: system-ui, sans-serif;
@@ -190,7 +185,6 @@
       line-height: 1;
     }
 
-    /* Houses */
     .houses {
       display: flex;
       flex-wrap: wrap;
@@ -201,7 +195,6 @@
       width: 100%;
     }
 
-    /* Last score */
     .last-score {
       font-size: 13px;
       font-family: system-ui, sans-serif;
@@ -210,7 +203,6 @@
       min-height: 18px;
     }
 
-    /* Buttons */
     .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -241,7 +233,6 @@
       color: var(--minus-text);
     }
 
-    /* Toggles row */
     .toggles {
       display: flex;
       flex-direction: column;
@@ -305,7 +296,6 @@
       text-transform: uppercase;
     }
 
-    /* Log */
     .log-toggle-btn {
       display: block;
       width: 100%;
@@ -462,7 +452,7 @@
     <header class="header">
       <div class="header-left">
         <h1 class="title">Dominoes Scoring App</h1>
-        <p class="subtitle">Made by Trevor Born, co-author of <a href="https://www.amazon.com/gp/product/B09MBV9DWV/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B09MBV9DWV&linkCode=as2&tag=dominoesboo02-20&linkId=03964fffa1d43eb78200f5b63680597a" target="_blank" rel="noopener">Play Dominoes Like a Champion</a></p>
+        <p class="subtitle">Made by the co-author of <a href="https://www.amazon.com/gp/product/B09MBV9DWV/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B09MBV9DWV&linkCode=as2&tag=dominoesboo02-20&linkId=03964fffa1d43eb78200f5b63680597a" target="_blank" rel="noopener">Play Dominoes Like a Champion</a></p>
       </div>
       <div class="header-right">
         <button class="header-btn" onclick="resetGame()">New game</button>
@@ -473,7 +463,7 @@
     <div class="players">
       <div class="player-card" id="card-0">
         <div class="name-wrap">
-          <input class="player-name-input" id="name-0" value="Add Player Name" maxlength="16" placeholder="Add Player Name" />
+          <input class="player-name-input" id="name-0" value="Add Name — Player 1" maxlength="20" placeholder="Add Name — Player 1" />
           <span class="edit-icon">✎</span>
         </div>
         <div class="score-number" id="score-0">0</div>
@@ -483,7 +473,7 @@
       </div>
       <div class="player-card" id="card-1">
         <div class="name-wrap">
-          <input class="player-name-input" id="name-1" value="Add Player Name" maxlength="16" placeholder="Add Player Name" />
+          <input class="player-name-input" id="name-1" value="Add Name — Player 2" maxlength="20" placeholder="Add Name — Player 2" />
           <span class="edit-icon">✎</span>
         </div>
         <div class="score-number" id="score-1">0</div>
@@ -493,7 +483,6 @@
       </div>
     </div>
 
-    <!-- Toggles -->
     <div class="toggles">
       <div class="toggle-row">
         <span class="toggle-label">Announce scores aloud</span>
@@ -504,7 +493,6 @@
       </div>
     </div>
 
-    <!-- Log -->
     <div class="log-section">
       <button class="log-toggle-btn" onclick="toggleLog()">hide score log</button>
       <div class="log-area open" id="log-area"></div>
@@ -535,17 +523,18 @@
   <script>
     var POINT_VALUES = [5, 10, 15, 20, 25, 30, 35, -5];
     var TARGET = 250;
-    var STORAGE_KEY = 'dominoes_state_v1';
+    var STORAGE_KEY = 'dominoes_state_v2';
 
     var state = {
       scores: [0, 0],
+      houses: [[freshHouse()], [freshHouse()]],
       lastScore: [null, null],
-      names: ['Add Player Name', 'Add Player Name'],
+      names: ['Add Name \u2014 Player 1', 'Add Name \u2014 Player 2'],
       log: [],
       over: false
     };
 
-    // ── Wake Lock ───────────────────────────────────────
+    // ── Wake Lock ────────────────────────────────────────
     var wakeLock = null;
 
     function requestWakeLock() {
@@ -561,7 +550,7 @@
       if (document.visibilityState === 'visible') requestWakeLock();
     });
 
-    // ── Voice ───────────────────────────────────────────
+    // ── Voice ────────────────────────────────────────────
     var voiceEnabled = false;
 
     function onVoiceToggle() {
@@ -569,8 +558,7 @@
     }
 
     function announce(pts) {
-      if (!voiceEnabled) return;
-      if (!window.speechSynthesis) return;
+      if (!voiceEnabled || !window.speechSynthesis) return;
       var text = pts > 0 ? 'Plus ' + pts : 'Minus ' + Math.abs(pts);
       var utt = new SpeechSynthesisUtterance(text);
       utt.rate = 1.0;
@@ -578,16 +566,55 @@
       window.speechSynthesis.speak(utt);
     }
 
-    // ── House drawing ───────────────────────────────────
+    // ── House state helpers ──────────────────────────────
     function freshHouse() {
       return { foundation: 0, quadrants: [{t:'empty'},{t:'empty'},{t:'empty'},{t:'empty'}] };
     }
 
-    function buildHousesFromScore(score) {
+    function currentHouse(player) {
+      return state.houses[player][state.houses[player].length - 1];
+    }
+
+    // Apply positive points to tracked house state, correctly preserving X vs O.
+    // +10 in one go → O (circle). Two separate +5s → X.
+    function applyPositivePoints(player, pts) {
+      var remaining = pts;
+      while (remaining > 0) {
+        var house = currentHouse(player);
+        // Fill foundation: horizontal first (1), then vertical (2)
+        if (house.foundation < 2) {
+          house.foundation++;
+          remaining -= 5;
+          continue;
+        }
+        // Find next available quadrant
+        var qi = -1;
+        for (var i = 0; i < 4; i++) {
+          if (house.quadrants[i].t === 'empty' || house.quadrants[i].t === 'half') { qi = i; break; }
+        }
+        if (qi === -1) {
+          state.houses[player].push(freshHouse());
+          continue;
+        }
+        var q = house.quadrants[qi];
+        if (remaining >= 10 && q.t === 'empty') {
+          q.t = 'o'; remaining -= 10;       // +10 in one tap → circle
+        } else if (remaining >= 5 && q.t === 'empty') {
+          q.t = 'half'; remaining -= 5;     // first +5 → half stroke
+        } else if (remaining >= 5 && q.t === 'half') {
+          q.t = 'x'; remaining -= 5;        // second +5 → complete X
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Recalculate houses from raw score — used only after -5.
+    // Loses X/O distinction on affected house; fills with O's for simplicity.
+    function recalcHousesFromScore(score) {
       var houses = [];
       var remaining = Math.max(0, score);
       var houseCount = Math.ceil(remaining / 50) || 1;
-
       for (var h = 0; h < houseCount; h++) {
         var house = freshHouse();
         if (remaining >= 5) { house.foundation = 1; remaining -= 5; } else { houses.push(house); break; }
@@ -600,11 +627,11 @@
         houses.push(house);
         if (remaining <= 0) break;
       }
-
       if (houses.length === 0) houses.push(freshHouse());
       return houses;
     }
 
+    // ── SVG rendering ────────────────────────────────────
     function drawHouseSVG(houseData, size) {
       var ns = 'http://www.w3.org/2000/svg';
       var svg = document.createElementNS(ns, 'svg');
@@ -664,15 +691,24 @@
     function renderHouses(player) {
       var container = document.getElementById('houses-' + player);
       container.innerHTML = '';
-      buildHousesFromScore(state.scores[player]).forEach(function(h) {
+      state.houses[player].forEach(function(h) {
         container.appendChild(drawHouseSVG(h, 56));
       });
     }
 
-    // ── Scoring ─────────────────────────────────────────
+    // ── Scoring ──────────────────────────────────────────
     function addPoints(player, pts) {
       if (state.over && pts > 0) return;
-      state.scores[player] = Math.max(0, state.scores[player] + pts);
+
+      if (pts > 0) {
+        applyPositivePoints(player, pts);
+        state.scores[player] += pts;
+      } else {
+        // Negative: subtract and recalculate houses
+        state.scores[player] = Math.max(0, state.scores[player] + pts);
+        state.houses[player] = recalcHousesFromScore(state.scores[player]);
+      }
+
       state.lastScore[player] = pts;
       state.names[player] = document.getElementById('name-' + player).value || 'Player ' + (player + 1);
 
@@ -724,7 +760,6 @@
         } else {
           lastEl.textContent = '';
         }
-        // Restore names
         var nameInput = document.getElementById('name-' + p);
         if (state.names[p]) nameInput.value = state.names[p];
       });
@@ -748,13 +783,14 @@
 
     function resetGame() {
       state.scores = [0, 0];
+      state.houses = [[freshHouse()], [freshHouse()]];
       state.lastScore = [null, null];
-      state.names = ['Add Player Name', 'Add Player Name'];
+      state.names = ['Add Name \u2014 Player 1', 'Add Name \u2014 Player 2'];
       state.log = [];
       state.over = false;
       setAllButtonsDisabled(false);
       [0, 1].forEach(function(p) {
-        document.getElementById('name-' + p).value = 'Add Player Name';
+        document.getElementById('name-' + p).value = 'Add Name \u2014 Player ' + (p + 1);
         var card = document.getElementById('card-' + p);
         card.classList.remove('winner');
         var lbl = card.querySelector('.winner-label');
@@ -764,7 +800,7 @@
       updateUI();
     }
 
-    // ── Log ─────────────────────────────────────────────
+    // ── Log ──────────────────────────────────────────────
     function renderLog() {
       var area = document.getElementById('log-area');
       if (!state.log.length) {
@@ -786,9 +822,7 @@
 
     // ── Local Storage ────────────────────────────────────
     function saveToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch(e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
     }
 
     function loadFromStorage() {
@@ -801,7 +835,7 @@
       } catch(e) {}
     }
 
-    // ── Save / Load Panel ────────────────────────────────
+    // ── Save / Load Panel ─────────────────────────────────
     function openPanel() {
       document.getElementById('panelOverlay').classList.add('open');
       document.getElementById('exportMsg').textContent = '';
@@ -818,7 +852,6 @@
     }
 
     function stateToCode() {
-      // Save names from inputs before encoding
       state.names[0] = document.getElementById('name-0').value;
       state.names[1] = document.getElementById('name-1').value;
       return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
@@ -828,7 +861,7 @@
       var code = stateToCode();
       if (navigator.clipboard) {
         navigator.clipboard.writeText(code)
-          .then(function() { showPanelMsg('exportMsg', '✓ Game code copied to clipboard', true); })
+          .then(function() { showPanelMsg('exportMsg', '\u2713 Game code copied to clipboard', true); })
           .catch(function() { fallbackCopy(code); });
       } else {
         fallbackCopy(code);
@@ -843,9 +876,9 @@
       ta.focus(); ta.select();
       try {
         document.execCommand('copy');
-        showPanelMsg('exportMsg', '✓ Game code copied to clipboard', true);
+        showPanelMsg('exportMsg', '\u2713 Game code copied to clipboard', true);
       } catch(e) {
-        showPanelMsg('exportMsg', 'Could not copy automatically — select and copy the text above.', false);
+        showPanelMsg('exportMsg', 'Could not copy automatically \u2014 select and copy the text above.', false);
       }
       document.body.removeChild(ta);
     }
@@ -860,8 +893,9 @@
 
     function applyImport(obj, silent) {
       state.scores = obj.scores || [0, 0];
+      state.houses = obj.houses || [[freshHouse()], [freshHouse()]];
       state.lastScore = obj.lastScore || [null, null];
-      state.names = obj.names || ['Add Player Name', 'Add Player Name'];
+      state.names = obj.names || ['Add Name \u2014 Player 1', 'Add Name \u2014 Player 2'];
       state.log = obj.log || [];
       state.over = obj.over || false;
 
@@ -874,7 +908,6 @@
       });
 
       if (state.over) {
-        // Re-trigger winner display
         var winner = state.scores[0] >= TARGET ? 0 : 1;
         endGame(winner);
       }
@@ -894,7 +927,7 @@
           saveToStorage();
         }
       } catch(e) {
-        showPanelMsg('importMsg', "⚠ That code doesn't look right. Make sure you copied the whole thing.", false);
+        showPanelMsg('importMsg', '\u26a0 That code doesn\'t look right. Make sure you copied the whole thing.', false);
       }
     }
 
